@@ -20,3 +20,4 @@ webhooks:
     apiVersions: ["*"]
     operations:
     - CREATE
+    - UPDATE

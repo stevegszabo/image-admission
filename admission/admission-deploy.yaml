@@ -4,6 +4,17 @@ kind: ConfigMap
 metadata:
   name: admission
 data:
+  namespaces.allowed: |
+    base-actions-arc-google
+    base-actions-controller
+    base-admission
+    base-argocd
+    base-metrics-server
+    base-terraform-agents
+    base-terraform-operator
+    kube-node-lease
+    kube-public
+    kube-system
   images.allowed: |
     docker.io/sample/image:v0.0.1
     docker.io/sample/image:v0.0.2
@@ -44,6 +55,8 @@ spec:
         configMap:
           name: admission
           items:
+          - key: namespaces.allowed
+            path: namespaces.allowed
           - key: images.allowed
             path: images.allowed
       - name: admission-secret
@@ -56,8 +69,10 @@ spec:
         - name: admission
           containerPort: 8443
         env:
-        - name: ADMISSION_CFG_ALLOW_IMAGES
+        - name: ADMISSION_ALLOW_IMAGES
           value: "/app/config/images.allowed"
+        - name: ADMISSION_ALLOW_NAMESPACES
+          value: "/app/config/namespaces.allowed"
         - name: ADMISSION_CRT
           value: "/app/ssl/admission.base-admission.svc.crt"
         - name: ADMISSION_KEY

@@ -7,9 +7,12 @@ from flask import Flask
 from flask import request
 from flask import jsonify
 
+ADMISSION_CFG_ENFORCE_MODE = not os.environ.get("ADMISSION_AUDIT_MODE")
 ADMISSION_CFG_LOG_LEVEL = os.environ.get("ADMISSION_LOG_LEVEL", "debug").lower()
-ADMISSION_CFG_ALLOW_IMAGES_FILENAME = os.environ.get("ADMISSION_CFG_ALLOW_IMAGES", "/app/config/images.allowed")
+ADMISSION_CFG_ALLOW_IMAGES_FILENAME = os.environ.get("ADMISSION_ALLOW_IMAGES", "/app/config/images.allowed")
+ADMISSION_CFG_ALLOW_NAMESPACES_FILENAME = os.environ.get("ADMISSION_ALLOW_NAMESPACES", "/app/config/namespaces.allowed")
 ADMISSION_CFG_ALLOW_IMAGES = []
+ADMISSION_CFG_ALLOW_NAMESPACES = []
 
 controller = Flask(__name__)
 controller.logger.setLevel(level=logging.DEBUG)
@@ -23,9 +26,14 @@ elif ADMISSION_CFG_LOG_LEVEL == "error":
 elif ADMISSION_CFG_LOG_LEVEL == "critical":
     controller.logger.setLevel(level=logging.CRITICAL)
 
+with open(ADMISSION_CFG_ALLOW_NAMESPACES_FILENAME) as handle:
+    for namespace in handle:
+        controller.logger.debug(f"Allow namespace: [{namespace.rstrip()}]")
+        ADMISSION_CFG_ALLOW_NAMESPACES.append(namespace.rstrip())
+
 with open(ADMISSION_CFG_ALLOW_IMAGES_FILENAME) as handle:
     for image in handle:
-        controller.logger.debug(f"Adding allow image: [{image.rstrip()}]")
+        controller.logger.debug(f"Allow image: [{image.rstrip()}]")
         ADMISSION_CFG_ALLOW_IMAGES.append(image.rstrip())
 
 
@@ -62,25 +70,38 @@ def mutate():
     controller.logger.debug(f"Mutation operation: [{request_operation}]")
     controller.logger.debug(f"Mutation uid: [{request_uid}]")
 
-    if request_kind == "Deployment" and request_operation == "CREATE":
-        for request_container in request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]:
-            controller.logger.debug(f"Validating image: [{request_container['image']}]")
-            if request_container["image"] not in ADMISSION_CFG_ALLOW_IMAGES:
-                controller.logger.debug(f"Rejecting image: [{request_container['image']}]")
-                return respond(allowed=False, uid=request_uid, message=f"Rejected: {request_name}, image is not allowed: {request_container['image']}")
+    if request_namespace not in ADMISSION_CFG_ALLOW_NAMESPACES:
+        if request_operation in ["CREATE", "UPDATE"]:
+            if request_kind == "Deployment":
+                for request_container in request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]:
+                    controller.logger.debug(f"Validating image: [{request_container['image']}]")
+                    if request_container["image"] not in ADMISSION_CFG_ALLOW_IMAGES:
+                        controller.logger.debug(f"Rejecting image: [{request_container['image']}]")
+                        if ADMISSION_CFG_ENFORCE_MODE:
+                            return respond(allowed=False, uid=request_uid, message=f"Rejected: [{request_kind}][{request_namespace}][{request_name}]")
 
     if 'labels' not in request_json["request"]["object"]["metadata"]:
         request_patch_ops.append({"op": "add", "path": "/metadata/labels", "value": {}})
     request_patch_ops.append({"op": "add", "path": "/metadata/labels/mutated", "value": request_name})
-    return respond(allowed=True, uid=request_uid, message=f"Mutated: {request_name}", patch=jsonpatch.JsonPatch(request_patch_ops))
+    return respond(allowed=True, uid=request_uid, message=f"Mutated: [{request_kind}][{request_namespace}][{request_name}]", patch=jsonpatch.JsonPatch(request_patch_ops))
 
 
 @controller.route(rule="/validate", methods=["POST"])
 def validate():
     request_json = request.get_json()
-    request_uid = request_json["request"]["uid"]
+    request_kind = request_json["request"]["kind"]["kind"]
     request_name = request_json["request"]["name"]
-    return respond(allowed=True, uid=request_uid, message=f"Validated: {request_name}")
+    request_namespace = request_json["request"]["namespace"]
+    request_operation = request_json["request"]["operation"]
+    request_uid = request_json["request"]["uid"]
+
+    controller.logger.debug(f"Validation kind: [{request_kind}]")
+    controller.logger.debug(f"Validation name: [{request_name}]")
+    controller.logger.debug(f"Validation namespace: [{request_namespace}]")
+    controller.logger.debug(f"Validation operation: [{request_operation}]")
+    controller.logger.debug(f"Validation uid: [{request_uid}]")
+
+    return respond(allowed=True, uid=request_uid, message=f"Validated: [{request_kind}][{request_namespace}][{request_name}]")
 
 
 @controller.route(rule="/health", methods=["GET"])

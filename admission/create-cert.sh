@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+
+SSL_HOSTNAME=${1-webapp}
+SSL_DOMAIN=${2-cloudserv.ca}
+
+SSL_HOST_COMPLETE=$SSL_HOSTNAME.$SSL_DOMAIN
+SSL_HOST_CRT_FILENAME=$SSL_HOST_COMPLETE.crt
+SSL_HOST_SAN_FILENAME=$SSL_HOST_COMPLETE.san
+SSL_HOST_SUBJECT=$(printf 'subjectAltName=DNS:%s' $SSL_HOST_COMPLETE)
+
+SSL_ROOT_CRT_FILENAME=$SSL_DOMAIN.crt
+SSL_ROOT_KEY_FILENAME=$SSL_DOMAIN.key
+SSL_ROOT_SUBJECT=$(printf '/O=Company Inc./CN=%s' $SSL_DOMAIN)
+
+SSL_REQUEST_CSR_FILENAME=$SSL_HOST_COMPLETE.csr
+SSL_REQUEST_KEY_FILENAME=$SSL_HOST_COMPLETE.key
+SSL_REQUEST_SUBJECT=$(printf '/CN=%s/O=%s organization' $SSL_HOST_COMPLETE $SSL_HOSTNAME)
+
+mkdir -p $SSL_HOST_COMPLETE
+pushd $SSL_HOST_COMPLETE
+
+# create root ca
+openssl req -x509 -sha256 -days 365 -nodes -newkey rsa:2048 -subj "$SSL_ROOT_SUBJECT" -keyout $SSL_ROOT_KEY_FILENAME -out $SSL_ROOT_CRT_FILENAME
+
+# create signing request
+openssl req -nodes -newkey rsa:2048 -subj "$SSL_REQUEST_SUBJECT" -keyout $SSL_REQUEST_KEY_FILENAME -out $SSL_REQUEST_CSR_FILENAME
+
+# create certificate
+echo "$SSL_HOST_SUBJECT" > $SSL_HOST_SAN_FILENAME
+openssl x509 -req -sha256 -days 365 -set_serial 0 -extfile $SSL_HOST_SAN_FILENAME -CA $SSL_ROOT_CRT_FILENAME -CAkey $SSL_ROOT_KEY_FILENAME -in $SSL_REQUEST_CSR_FILENAME -out $SSL_HOST_CRT_FILENAME
+openssl x509 -text -in $SSL_HOST_CRT_FILENAME
+
+exit 0

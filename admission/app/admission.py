@@ -2,6 +2,7 @@ import os
 import base64
 import logging
 import jsonpatch
+import jsonschema
 
 from flask import Flask
 from flask import request
@@ -16,6 +17,17 @@ ADMISSION_CFG_EXEMPT_NAMESPACES = []
 
 controller = Flask(__name__)
 controller.logger.setLevel(level=logging.DEBUG)
+
+jsonschema.validate(instance={
+    "name": "123"
+}, schema={
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "http://cloudserv.ca/schemas/admission.json",
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"}
+    }
+})
 
 if ADMISSION_CFG_LOG_LEVEL == "info":
     controller.logger.setLevel(level=logging.INFO)

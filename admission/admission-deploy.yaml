@@ -71,8 +71,8 @@ spec:
         env:
         - name: ADMISSION_ALLOW_IMAGES
           value: "/app/config/images.allowed"
-        - name: ADMISSION_ALLOW_NAMESPACES
-          value: "/app/config/namespaces.allowed"
+        - name: ADMISSION_EXEMPT_NAMESPACES
+          value: "/app/config/namespaces.exempt"
         - name: ADMISSION_CRT
           value: "/app/ssl/admission.base-admission.svc.crt"
         - name: ADMISSION_KEY

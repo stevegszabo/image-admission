@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: admission
 data:
-  namespaces.allowed: |
+  namespaces.exempt: |
     base-actions-arc-google
     base-actions-controller
     base-admission
@@ -55,8 +55,8 @@ spec:
         configMap:
           name: admission
           items:
-          - key: namespaces.allowed
-            path: namespaces.allowed
+          - key: namespaces.exempt
+            path: namespaces.exempt
           - key: images.allowed
             path: images.allowed
       - name: admission-secret

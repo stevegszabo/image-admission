@@ -12,7 +12,6 @@ data:
     base-metrics-server
     base-terraform-agents
     base-terraform-operator
-    istio-system
     kube-node-lease
     kube-public
     kube-system

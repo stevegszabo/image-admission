@@ -70,11 +70,7 @@ def mutate():
     request_operation = request_json["request"]["operation"]
     request_uid = request_json["request"]["uid"]
 
-    controller.logger.debug(f"Mutation kind: [{request_kind}]")
-    controller.logger.debug(f"Mutation name: [{request_name}]")
-    controller.logger.debug(f"Mutation namespace: [{request_namespace}]")
-    controller.logger.debug(f"Mutation operation: [{request_operation}]")
-    controller.logger.debug(f"Mutation uid: [{request_uid}]")
+    controller.logger.debug(f"Mutation: [{request_kind}][{request_namespace}][{request_name}][{request_operation}][{request_uid}]")
 
     response = {
         "uid": request_uid,
@@ -104,11 +100,7 @@ def validate():
     request_operation = request_json["request"]["operation"]
     request_uid = request_json["request"]["uid"]
 
-    controller.logger.debug(f"Validation kind: [{request_kind}]")
-    controller.logger.debug(f"Validation name: [{request_name}]")
-    controller.logger.debug(f"Validation namespace: [{request_namespace}]")
-    controller.logger.debug(f"Validation operation: [{request_operation}]")
-    controller.logger.debug(f"Validation uid: [{request_uid}]")
+    controller.logger.debug(f"Validation: [{request_kind}][{request_namespace}][{request_name}][{request_operation}][{request_uid}]")
 
     response = {
         "uid": request_uid,

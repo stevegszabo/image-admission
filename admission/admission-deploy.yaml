@@ -89,8 +89,8 @@ spec:
           value: "15"
         - name: ADMISSION_LOG_LEVEL
           value: "debug"
-        - name: ADMISSION_AUDIT_MODE
-          value: "true"
+#        - name: ADMISSION_AUDIT_MODE
+#          value: "true"
         volumeMounts:
         - name: admission-configmap
           mountPath: /app/config

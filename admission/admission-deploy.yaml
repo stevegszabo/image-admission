@@ -103,21 +103,21 @@ spec:
           subPath: tls.key
           mountPath: /app/ssl/admission.base-admission.svc.key
           readOnly: true
-        livenessProbe:
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          successThreshold: 1
-          failureThreshold: 3
-          httpGet:
-            path: /health
-            port: admission
-            scheme: HTTPS
-        readinessProbe:
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          successThreshold: 1
-          failureThreshold: 3
-          httpGet:
-            path: /health
-            port: admission
-            scheme: HTTPS
+#        livenessProbe:
+#          initialDelaySeconds: 5
+#          periodSeconds: 5
+#          successThreshold: 1
+#          failureThreshold: 3
+#          httpGet:
+#            path: /health
+#            port: admission
+#            scheme: HTTPS
+#        readinessProbe:
+#          initialDelaySeconds: 5
+#          periodSeconds: 5
+#          successThreshold: 1
+#          failureThreshold: 3
+#          httpGet:
+#            path: /health
+#            port: admission
+#            scheme: HTTPS

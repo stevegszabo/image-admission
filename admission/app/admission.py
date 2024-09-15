@@ -55,8 +55,8 @@ def respond(allowed, uid, message, patches=None):
 
     if patches:
         patch = jsonpatch.JsonPatch(patches).to_string().encode("utf-8")
-        response["response"]["patchType"] = "JSONPatch"
         response["response"]["patch"] = base64.b64encode(patch).decode("utf-8")
+        response["response"]["patchType"] = "JSONPatch"
 
     return jsonify(response)
 
@@ -86,6 +86,7 @@ def mutate():
     if request_namespace not in ADMISSION_CFG_EXEMPT_NAMESPACES:
         if request_operation in ["CREATE", "UPDATE"]:
             if request_kind == "Deployment":
+
                 response["patches"] = []
                 if "labels" not in request_json["request"]["object"]["metadata"]:
                     response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})

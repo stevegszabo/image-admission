@@ -12,13 +12,14 @@ data:
     base-metrics-server
     base-terraform-agents
     base-terraform-operator
+    istio-system
     kube-node-lease
     kube-public
     kube-system
   images.allowed: |
-    docker.io/sample/image:v0.0.1
-    docker.io/sample/image:v0.0.2
-    docker.io/sample/image:v0.0.3
+    docker.io/steveszabo/webapp:v1.1.0
+    docker.io/steveszabo/webapp:v1.1.1
+    docker.io/steveszabo/webapp:v1.1.2
 
 ---
 apiVersion: v1
@@ -64,7 +65,7 @@ spec:
           secretName: admission
       containers:
       - name: admission
-        image: docker.io/sample/admission:v0.0.1
+        image: docker.io/steveszabo/admission:v1.0.28
         ports:
         - name: admission
           containerPort: 8443
@@ -89,6 +90,8 @@ spec:
           value: "15"
         - name: ADMISSION_LOG_LEVEL
           value: "debug"
+        - name: ADMISSION_AUDIT_MODE
+          value: "true"
         volumeMounts:
         - name: admission-configmap
           mountPath: /app/config

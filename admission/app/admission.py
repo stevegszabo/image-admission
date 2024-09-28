@@ -64,11 +64,11 @@ def respond(allowed, uid, message, patches=None):
 @controller.route(rule="/mutate", methods=["POST"])
 def mutate():
     request_json = request.get_json()
-    request_kind = request_json["request"]["kind"]["kind"]
-    request_name = request_json["request"]["name"]
-    request_namespace = request_json["request"]["namespace"]
-    request_operation = request_json["request"]["operation"]
-    request_uid = request_json["request"]["uid"]
+    request_kind = request_json.get("request", {}).get("kind", {}).get("kind", "")
+    request_name = request_json.get("request", {}).get("name", "")
+    request_namespace = request_json.get("request", {}).get("namespace", "")
+    request_operation = request_json.get("request", {}).get("operation", "")
+    request_uid = request_json.get("request", {}).get("uid", "")
 
     controller.logger.debug(f"Mutation: [{request_kind}][{request_namespace}][{request_name}][{request_operation}][{request_uid}]")
 
@@ -94,11 +94,11 @@ def mutate():
 @controller.route(rule="/validate", methods=["POST"])
 def validate():
     request_json = request.get_json()
-    request_kind = request_json["request"]["kind"]["kind"]
-    request_name = request_json["request"]["name"]
-    request_namespace = request_json["request"]["namespace"]
-    request_operation = request_json["request"]["operation"]
-    request_uid = request_json["request"]["uid"]
+    request_kind = request_json.get("request", {}).get("kind", {}).get("kind", "")
+    request_name = request_json.get("request", {}).get("name", "")
+    request_namespace = request_json.get("request", {}).get("namespace", "")
+    request_operation = request_json.get("request", {}).get("operation", "")
+    request_uid = request_json.get("request", {}).get("uid", "")
 
     controller.logger.debug(f"Validation: [{request_kind}][{request_namespace}][{request_name}][{request_operation}][{request_uid}]")
 

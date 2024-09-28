@@ -21,6 +21,16 @@ data:
     docker.io/steveszabo/webapp:v1.1.0
     docker.io/steveszabo/webapp:v1.1.1
     docker.io/steveszabo/webapp:v1.1.2
+  mutate.workloads: |
+    {
+      "namespaces": [
+        {
+          "namespace": "default",
+          "source-image": "docker.io/steveszabo/webapp:v1.1.2",
+          "mutate-image": "docker.io/steveszabo/webapp:fc55ec1"
+        }
+      ]
+    }
 
 ---
 apiVersion: v1
@@ -61,6 +71,8 @@ spec:
             path: namespaces.exempt
           - key: images.allowed
             path: images.allowed
+          - key: mutate.workloads
+            path: mutate.workloads
       - name: admission-secret
         secret:
           secretName: admission
@@ -75,6 +87,8 @@ spec:
           value: "/app/config/images.allowed"
         - name: ADMISSION_EXEMPT_NAMESPACES
           value: "/app/config/namespaces.exempt"
+        - name: ADMISSION_MUTATE_WORKLOADS
+          value: "/app/config/mutate.workloads"
         - name: ADMISSION_CRT
           value: "/app/ssl/admission.base-admission.svc.crt"
         - name: ADMISSION_KEY

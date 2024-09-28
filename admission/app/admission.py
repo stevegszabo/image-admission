@@ -1,4 +1,5 @@
 import os
+import json
 import base64
 import logging
 import jsonpatch
@@ -11,8 +12,11 @@ ADMISSION_CFG_ENFORCE_MODE = not os.environ.get("ADMISSION_AUDIT_MODE")
 ADMISSION_CFG_LOG_LEVEL = os.environ.get("ADMISSION_LOG_LEVEL", "debug").lower()
 ADMISSION_CFG_ALLOW_IMAGES_FILENAME = os.environ.get("ADMISSION_ALLOW_IMAGES", "images.allowed")
 ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME = os.environ.get("ADMISSION_EXEMPT_NAMESPACES", "namespaces.exempt")
+ADMISSION_CFG_MUTATE_WORKLOADS_FILENAME = os.environ.get("ADMISSION_MUTATE_WORKLOADS", "mutate.workloads")
+
 ADMISSION_CFG_ALLOW_IMAGES = []
 ADMISSION_CFG_EXEMPT_NAMESPACES = []
+ADMISSION_CFG_MUTATE_WORKLOADS = {}
 
 controller = Flask(__name__)
 controller.logger.setLevel(level=logging.DEBUG)
@@ -30,6 +34,7 @@ controller.logger.debug(f"ADMISSION_CFG_ENFORCE_MODE: [{ADMISSION_CFG_ENFORCE_MO
 controller.logger.debug(f"ADMISSION_CFG_LOG_LEVEL: [{ADMISSION_CFG_LOG_LEVEL}]")
 controller.logger.debug(f"ADMISSION_CFG_ALLOW_IMAGES_FILENAME: [{ADMISSION_CFG_ALLOW_IMAGES_FILENAME}]")
 controller.logger.debug(f"ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME: [{ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME}]")
+controller.logger.debug(f"ADMISSION_CFG_MUTATE_WORKLOADS_FILENAME: [{ADMISSION_CFG_MUTATE_WORKLOADS_FILENAME}]")
 
 with open(ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME) as handle:
     for item in handle:
@@ -40,6 +45,9 @@ with open(ADMISSION_CFG_ALLOW_IMAGES_FILENAME) as handle:
     for item in handle:
         controller.logger.debug(f"Allow image: [{item.rstrip()}]")
         ADMISSION_CFG_ALLOW_IMAGES.append(item.rstrip())
+
+with open(ADMISSION_CFG_MUTATE_WORKLOADS_FILENAME) as handle:
+    ADMISSION_CFG_MUTATE_WORKLOADS = json.load(handle)
 
 
 def respond(allowed, uid, message, patches=None):
@@ -84,21 +92,22 @@ def mutate():
             if request_kind == "Deployment":
 
                 response["patches"] = []
+
                 if "labels" not in request_json["request"]["object"]["metadata"]:
                     response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})
                 response["patches"].append({"op": "add", "path": "/metadata/labels/mutated", "value": request_name})
 
                 for index, request_container in enumerate(request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]):
-
                     container_name = request_container["name"]
                     container_image = request_container["image"]
-                    controller.logger.info(f"Mutating container image: [{container_name}][{container_image}]")
 
-                    container_patch_path = f"/spec/template/spec/containers/{index}/image"
-                    container_patch_value = "docker.io/steveszabo/webapp:fc55ec1"
-                    controller.logger.info(f"Mutating container image using patch: [{container_patch_path}][{container_patch_value}]")
-
-                    response["patches"].append({"op": "replace", "path": container_patch_path, "value": container_patch_value})
+                    for mutation_rule_namespace in ADMISSION_CFG_MUTATE_WORKLOADS["namespaces"]:
+                        if request_namespace == mutation_rule_namespace["namespace"]:
+                            if container_image == mutation_rule_namespace["source-image"]:
+                                container_patch_path = f"/spec/template/spec/containers/{index}/image"
+                                container_patch_value = mutation_rule_namespace["mutate-image"]
+                                controller.logger.info(f"Mutating container image: [{container_name}][{container_image}]")
+                                response["patches"].append({"op": "replace", "path": container_patch_path, "value": container_patch_value})
 
     return respond(**response)
 

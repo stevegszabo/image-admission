@@ -102,12 +102,13 @@ def mutate():
                 for index, request_container in enumerate(request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]):
                     container_name = request_container["name"]
                     container_image = request_container["image"]
+                    controller.logger.info(f"Detected container image: [{container_name}][{container_image}]")
 
                     if container_mutate_rule and container_image == container_mutate_rule["deploy-image"]:
                         container_patch_path = f"/spec/template/spec/containers/{index}/image"
                         container_patch_value = container_mutate_rule["mutate-image"]
                         response["patches"].append({"op": "replace", "path": container_patch_path, "value": container_patch_value})
-                        controller.logger.info(f"Mutating container image: [{container_name}][{container_image}]")
+                        controller.logger.info(f"Mutating container image: [{container_patch_path}][{container_patch_value}]")
 
     return respond(**response)
 

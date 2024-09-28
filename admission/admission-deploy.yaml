@@ -23,14 +23,11 @@ data:
     docker.io/steveszabo/webapp:v1.1.2
   mutate.workloads: |
     {
-      "namespaces": [
-        {
-          "namespace": "default",
-          "source-image": "docker.io/steveszabo/webapp:v1.1.2",
-          "mutate-image": "docker.io/steveszabo/webapp:fc55ec1"
-        }
-      ]
-    }
+      "default": {
+        "deploy-image": "docker.io/steveszabo/webapp:v1.1.2",
+        "mutate-image": "docker.io/steveszabo/webapp:fc55ec1"
+      }
+    }    
 
 ---
 apiVersion: v1

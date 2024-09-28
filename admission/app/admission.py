@@ -97,17 +97,17 @@ def mutate():
                     response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})
                 response["patches"].append({"op": "add", "path": "/metadata/labels/mutated", "value": request_name})
 
+                container_mutate_rule = ADMISSION_CFG_MUTATE_WORKLOADS.get(request_namespace)
+
                 for index, request_container in enumerate(request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]):
                     container_name = request_container["name"]
                     container_image = request_container["image"]
 
-                    for mutation_rule_namespace in ADMISSION_CFG_MUTATE_WORKLOADS["namespaces"]:
-                        if request_namespace == mutation_rule_namespace["namespace"]:
-                            if container_image == mutation_rule_namespace["source-image"]:
-                                container_patch_path = f"/spec/template/spec/containers/{index}/image"
-                                container_patch_value = mutation_rule_namespace["mutate-image"]
-                                controller.logger.info(f"Mutating container image: [{container_name}][{container_image}]")
-                                response["patches"].append({"op": "replace", "path": container_patch_path, "value": container_patch_value})
+                    if container_mutate_rule and container_image == container_mutate_rule["deploy-image"]:
+                        container_patch_path = f"/spec/template/spec/containers/{index}/image"
+                        container_patch_value = container_mutate_rule["mutate-image"]
+                        response["patches"].append({"op": "replace", "path": container_patch_path, "value": container_patch_value})
+                        controller.logger.info(f"Mutating container image: [{container_name}][{container_image}]")
 
     return respond(**response)
 

@@ -15,7 +15,9 @@ data:
     kube-node-lease
     kube-public
     kube-system
+    istio-system
   images.allowed: |
+    docker.io/steveszabo/webapp:fc55ec1
     docker.io/steveszabo/webapp:v1.1.0
     docker.io/steveszabo/webapp:v1.1.1
     docker.io/steveszabo/webapp:v1.1.2
@@ -89,8 +91,8 @@ spec:
           value: "15"
         - name: ADMISSION_LOG_LEVEL
           value: "debug"
-#        - name: ADMISSION_AUDIT_MODE
-#          value: "true"
+        - name: ADMISSION_AUDIT_MODE
+          value: "true"
         volumeMounts:
         - name: admission-configmap
           mountPath: /app/config

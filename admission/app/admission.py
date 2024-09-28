@@ -88,8 +88,9 @@ def mutate():
                     response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})
                 response["patches"].append({"op": "add", "path": "/metadata/labels/mutated", "value": request_name})
 
-                for request_container in request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]:
+                for index, request_container in enumerate(request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]):
                     controller.logger.debug(f"Mutating container image: [{request_container["name"]}][{request_container["image"]}]")
+                    response["patches"].append({"op": "replace", "path": f"/spec/template/spec/containers[{index}]/image", "value": "docker.io/steveszabo/webapp:fc55ec1"})
 
     return respond(**response)
 

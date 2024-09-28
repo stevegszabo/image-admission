@@ -24,7 +24,15 @@ if __name__ == "__main__":
                         "spec": {
                             "containers": [
                                 {
-                                    "name": "container",
+                                    "name": "container-01",
+                                    "image": "docker.io/steveszabo/webapp:v1.1.2",
+                                    "resources": {
+                                        "requests": {},
+                                        "limits": {}
+                                    }
+                                },
+                                {
+                                    "name": "container-02",
                                     "image": "docker.io/steveszabo/webapp:v1.1.2",
                                     "resources": {
                                         "requests": {},

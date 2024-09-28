@@ -14,7 +14,11 @@ if __name__ == "__main__":
                 "kind": "Deployment"
             },
             "object": {
-                "metadata": {},
+                "metadata": {
+                    "labels": {
+                        "company": "cloudserv.ca"
+                    }
+                },
                 "spec": {
                     "template": {
                         "spec": {

@@ -87,28 +87,27 @@ def mutate():
         "message": f"Mutated: [{request_kind}][{request_namespace}][{request_name}]"
     }
 
-    if request_namespace not in ADMISSION_CFG_EXEMPT_NAMESPACES:
-        if request_operation in ["CREATE", "UPDATE"]:
-            if request_kind == "Deployment":
+    if request_operation in ["CREATE", "UPDATE"] and request_kind == "Deployment":
+        if request_namespace not in ADMISSION_CFG_EXEMPT_NAMESPACES:
 
-                response["patches"] = []
+            response["patches"] = []
 
-                if "labels" not in request_json["request"]["object"]["metadata"]:
-                    response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})
-                response["patches"].append({"op": "add", "path": "/metadata/labels/mutated", "value": request_name})
+            if "labels" not in request_json["request"]["object"]["metadata"]:
+                response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})
+            response["patches"].append({"op": "add", "path": "/metadata/labels/mutated", "value": request_name})
 
-                container_mutate_rule = ADMISSION_CFG_MUTATE_WORKLOADS.get(request_namespace)
+            container_mutate_rule = ADMISSION_CFG_MUTATE_WORKLOADS.get(request_namespace)
 
-                for index, request_container in enumerate(request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]):
-                    container_name = request_container["name"]
-                    container_image = request_container["image"]
-                    controller.logger.info(f"Detected container image: [{container_name}][{container_image}]")
+            for index, request_container in enumerate(request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]):
+                container_name = request_container["name"]
+                container_image = request_container["image"]
+                controller.logger.info(f"Detected container image: [{container_name}][{container_image}]")
 
-                    if container_mutate_rule and container_image == container_mutate_rule["deploy-image"]:
-                        container_patch_path = f"/spec/template/spec/containers/{index}/image"
-                        container_patch_value = container_mutate_rule["mutate-image"]
-                        response["patches"].append({"op": "replace", "path": container_patch_path, "value": container_patch_value})
-                        controller.logger.info(f"Mutating container image: [{container_patch_path}][{container_patch_value}]")
+                if container_mutate_rule and container_image == container_mutate_rule["deploy-image"]:
+                    container_patch_path = f"/spec/template/spec/containers/{index}/image"
+                    container_patch_value = container_mutate_rule["mutate-image"]
+                    response["patches"].append({"op": "replace", "path": container_patch_path, "value": container_patch_value})
+                    controller.logger.info(f"Mutating container image: [{container_patch_path}][{container_patch_value}]")
 
     return respond(**response)
 
@@ -130,31 +129,31 @@ def validate():
         "message": f"Validated: [{request_kind}][{request_namespace}][{request_name}]"
     }
 
-    if request_namespace not in ADMISSION_CFG_EXEMPT_NAMESPACES:
-        if request_operation in ["CREATE", "UPDATE"]:
-            if request_kind == "Deployment":
-                for request_container in request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]:
+    if request_operation in ["CREATE", "UPDATE"] and request_kind == "Deployment":
+        if request_namespace not in ADMISSION_CFG_EXEMPT_NAMESPACES:
 
-                    if "requests" not in request_container["resources"]:
-                        response["message"] += ": Rejected due to missing resources.requests element"
-                        controller.logger.warning(response["message"])
-                        if ADMISSION_CFG_ENFORCE_MODE:
-                            response["allowed"] = False
-                        return respond(**response)
+            for request_container in request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]:
 
-                    if "limits" not in request_container["resources"]:
-                        response["message"] += ": Rejected due to missing resources.limits element"
-                        controller.logger.warning(response["message"])
-                        if ADMISSION_CFG_ENFORCE_MODE:
-                            response["allowed"] = False
-                        return respond(**response)
+                if "requests" not in request_container["resources"]:
+                    response["message"] += ": Rejected due to missing resources.requests element"
+                    controller.logger.warning(response["message"])
+                    if ADMISSION_CFG_ENFORCE_MODE:
+                        response["allowed"] = False
+                    return respond(**response)
 
-                    if request_container["image"] not in ADMISSION_CFG_ALLOW_IMAGES:
-                        response["message"] += f": Rejected due to invalid image: [{request_container['image']}]"
-                        controller.logger.warning(response["message"])
-                        if ADMISSION_CFG_ENFORCE_MODE:
-                            response["allowed"] = False
-                        return respond(**response)
+                if "limits" not in request_container["resources"]:
+                    response["message"] += ": Rejected due to missing resources.limits element"
+                    controller.logger.warning(response["message"])
+                    if ADMISSION_CFG_ENFORCE_MODE:
+                        response["allowed"] = False
+                    return respond(**response)
+
+                if request_container["image"] not in ADMISSION_CFG_ALLOW_IMAGES:
+                    response["message"] += f": Rejected due to invalid image: [{request_container['image']}]"
+                    controller.logger.warning(response["message"])
+                    if ADMISSION_CFG_ENFORCE_MODE:
+                        response["allowed"] = False
+                    return respond(**response)
 
     return respond(**response)
 

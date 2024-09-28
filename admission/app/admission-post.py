@@ -21,7 +21,7 @@ if __name__ == "__main__":
                             "containers": [
                                 {
                                     "name": "name",
-                                    "image": "image",
+                                    "image": "docker.io/steveszabo/webapp:v1.1.2",
                                     "resources": {
                                         "requests": {},
                                         "limits": {}
@@ -47,4 +47,18 @@ if __name__ == "__main__":
         sys.exit(1)
 
     pprint.pprint(response.json())
+
+    try:
+        response = requests.post(url="http://192.168.2.180:8443/validate", json=request, timeout=10)
+    except Exception as err:
+        print(f"Unable to post: [{err}]")
+        sys.exit(1)
+
+    if response.status_code != 200:
+        print(f"code: [{response.status_code}]")
+        print(f"text: [{response.text}]")
+        sys.exit(1)
+
+    pprint.pprint(response.json())
+
     sys.exit(0)

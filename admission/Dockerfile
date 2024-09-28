@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 USER root
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y curl wget python3 python3-pip python3.10-venv iproute2 lsof netcat-openbsd && \
+    apt-get install -y python3 python3-pip python3.10-venv && \
     apt-get clean
 
 COPY app /app

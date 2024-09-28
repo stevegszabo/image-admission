@@ -15,10 +15,19 @@ data:
     kube-node-lease
     kube-public
     kube-system
+    istio-system
   images.allowed: |
-    docker.io/sample/image:v0.0.1
-    docker.io/sample/image:v0.0.2
-    docker.io/sample/image:v0.0.3
+    docker.io/steveszabo/webapp:fc55ec1
+    docker.io/steveszabo/webapp:v1.1.0
+    docker.io/steveszabo/webapp:v1.1.1
+    docker.io/steveszabo/webapp:v1.1.2
+  mutate.workloads: |
+    {
+      "default": {
+        "deploy-image": "docker.io/steveszabo/webapp:v1.1.2",
+        "mutate-image": "docker.io/steveszabo/webapp:fc55ec1"
+      }
+    }    
 
 ---
 apiVersion: v1
@@ -59,12 +68,14 @@ spec:
             path: namespaces.exempt
           - key: images.allowed
             path: images.allowed
+          - key: mutate.workloads
+            path: mutate.workloads
       - name: admission-secret
         secret:
           secretName: admission
       containers:
       - name: admission
-        image: docker.io/sample/admission:v0.0.1
+        image: docker.io/steveszabo/admission:v1.0.28
         ports:
         - name: admission
           containerPort: 8443
@@ -73,6 +84,8 @@ spec:
           value: "/app/config/images.allowed"
         - name: ADMISSION_EXEMPT_NAMESPACES
           value: "/app/config/namespaces.exempt"
+        - name: ADMISSION_MUTATE_WORKLOADS
+          value: "/app/config/mutate.workloads"
         - name: ADMISSION_CRT
           value: "/app/ssl/admission.base-admission.svc.crt"
         - name: ADMISSION_KEY
@@ -89,6 +102,8 @@ spec:
           value: "15"
         - name: ADMISSION_LOG_LEVEL
           value: "debug"
+        - name: ADMISSION_AUDIT_MODE
+          value: "true"
         volumeMounts:
         - name: admission-configmap
           mountPath: /app/config
@@ -101,21 +116,21 @@ spec:
           subPath: tls.key
           mountPath: /app/ssl/admission.base-admission.svc.key
           readOnly: true
-        livenessProbe:
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          successThreshold: 1
-          failureThreshold: 3
-          httpGet:
-            path: /health
-            port: admission
-            scheme: HTTPS
-        readinessProbe:
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          successThreshold: 1
-          failureThreshold: 3
-          httpGet:
-            path: /health
-            port: admission
-            scheme: HTTPS
+#        livenessProbe:
+#          initialDelaySeconds: 5
+#          periodSeconds: 5
+#          successThreshold: 1
+#          failureThreshold: 3
+#          httpGet:
+#            path: /health
+#            port: admission
+#            scheme: HTTPS
+#        readinessProbe:
+#          initialDelaySeconds: 5
+#          periodSeconds: 5
+#          successThreshold: 1
+#          failureThreshold: 3
+#          httpGet:
+#            path: /health
+#            port: admission
+#            scheme: HTTPS

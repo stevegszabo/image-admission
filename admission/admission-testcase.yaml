@@ -14,5 +14,23 @@ spec:
         app: webapp
     spec:
       containers:
-      - name: webapp
-        image: docker.io/sample/image:v0.0.1
+      - name: webapp-01
+        image: docker.io/steveszabo/webapp:v1.1.2
+        command: ["/bin/bash", "-c", "while true; do date; sleep 1; done"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64M
+          limits:
+            cpu: 100m
+            memory: 64M
+      - name: webapp-02
+        image: docker.io/steveszabo/webapp:v1.1.2
+        command: ["/bin/bash", "-c", "while true; do date; sleep 1; done"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64M
+          limits:
+            cpu: 100m
+            memory: 64M

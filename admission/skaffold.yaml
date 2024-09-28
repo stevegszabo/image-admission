@@ -1,0 +1,12 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: admission
+build:
+  artifacts:
+  - image: docker.io/steveszabo/admission
+    docker:
+      dockerfile: Dockerfile
+manifests:
+  rawYaml:
+  - admission-deploy.yaml

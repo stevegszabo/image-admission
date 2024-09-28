@@ -1,4 +1,5 @@
 import os
+import json
 import base64
 import logging
 import jsonpatch
@@ -11,8 +12,11 @@ ADMISSION_CFG_ENFORCE_MODE = not os.environ.get("ADMISSION_AUDIT_MODE")
 ADMISSION_CFG_LOG_LEVEL = os.environ.get("ADMISSION_LOG_LEVEL", "debug").lower()
 ADMISSION_CFG_ALLOW_IMAGES_FILENAME = os.environ.get("ADMISSION_ALLOW_IMAGES", "images.allowed")
 ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME = os.environ.get("ADMISSION_EXEMPT_NAMESPACES", "namespaces.exempt")
+ADMISSION_CFG_MUTATE_WORKLOADS_FILENAME = os.environ.get("ADMISSION_MUTATE_WORKLOADS", "mutate.workloads")
+
 ADMISSION_CFG_ALLOW_IMAGES = []
 ADMISSION_CFG_EXEMPT_NAMESPACES = []
+ADMISSION_CFG_MUTATE_WORKLOADS = {}
 
 controller = Flask(__name__)
 controller.logger.setLevel(level=logging.DEBUG)
@@ -30,6 +34,7 @@ controller.logger.debug(f"ADMISSION_CFG_ENFORCE_MODE: [{ADMISSION_CFG_ENFORCE_MO
 controller.logger.debug(f"ADMISSION_CFG_LOG_LEVEL: [{ADMISSION_CFG_LOG_LEVEL}]")
 controller.logger.debug(f"ADMISSION_CFG_ALLOW_IMAGES_FILENAME: [{ADMISSION_CFG_ALLOW_IMAGES_FILENAME}]")
 controller.logger.debug(f"ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME: [{ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME}]")
+controller.logger.debug(f"ADMISSION_CFG_MUTATE_WORKLOADS_FILENAME: [{ADMISSION_CFG_MUTATE_WORKLOADS_FILENAME}]")
 
 with open(ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME) as handle:
     for item in handle:
@@ -40,6 +45,9 @@ with open(ADMISSION_CFG_ALLOW_IMAGES_FILENAME) as handle:
     for item in handle:
         controller.logger.debug(f"Allow image: [{item.rstrip()}]")
         ADMISSION_CFG_ALLOW_IMAGES.append(item.rstrip())
+
+with open(ADMISSION_CFG_MUTATE_WORKLOADS_FILENAME) as handle:
+    ADMISSION_CFG_MUTATE_WORKLOADS = json.load(handle)
 
 
 def respond(allowed, uid, message, patches=None):
@@ -55,8 +63,8 @@ def respond(allowed, uid, message, patches=None):
 
     if patches:
         patch = jsonpatch.JsonPatch(patches).to_string().encode("utf-8")
-        response["response"]["patchType"] = "JSONPatch"
         response["response"]["patch"] = base64.b64encode(patch).decode("utf-8")
+        response["response"]["patchType"] = "JSONPatch"
 
     return jsonify(response)
 
@@ -70,11 +78,7 @@ def mutate():
     request_operation = request_json["request"]["operation"]
     request_uid = request_json["request"]["uid"]
 
-    controller.logger.debug(f"Mutation kind: [{request_kind}]")
-    controller.logger.debug(f"Mutation name: [{request_name}]")
-    controller.logger.debug(f"Mutation namespace: [{request_namespace}]")
-    controller.logger.debug(f"Mutation operation: [{request_operation}]")
-    controller.logger.debug(f"Mutation uid: [{request_uid}]")
+    controller.logger.debug(f"Mutating: [{request_kind}][{request_namespace}][{request_name}][{request_operation}][{request_uid}]")
 
     response = {
         "uid": request_uid,
@@ -83,13 +87,27 @@ def mutate():
         "message": f"Mutated: [{request_kind}][{request_namespace}][{request_name}]"
     }
 
-    if request_namespace not in ADMISSION_CFG_EXEMPT_NAMESPACES:
-        if request_operation in ["CREATE", "UPDATE"]:
-            if request_kind == "Deployment":
-                response["patches"] = []
-                if "labels" not in request_json["request"]["object"]["metadata"]:
-                    response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})
-                response["patches"].append({"op": "add", "path": "/metadata/labels/mutated", "value": request_name})
+    if request_operation in ["CREATE", "UPDATE"] and request_kind == "Deployment":
+        if request_namespace not in ADMISSION_CFG_EXEMPT_NAMESPACES:
+
+            response["patches"] = []
+
+            if "labels" not in request_json["request"]["object"]["metadata"]:
+                response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})
+            response["patches"].append({"op": "add", "path": "/metadata/labels/mutated", "value": request_name})
+
+            container_mutate_rule = ADMISSION_CFG_MUTATE_WORKLOADS.get(request_namespace)
+
+            for index, request_container in enumerate(request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]):
+                container_name = request_container["name"]
+                container_image = request_container["image"]
+                controller.logger.info(f"Detected container image: [{container_name}][{container_image}]")
+
+                if container_mutate_rule and container_image == container_mutate_rule["deploy-image"]:
+                    container_patch_path = f"/spec/template/spec/containers/{index}/image"
+                    container_patch_value = container_mutate_rule["mutate-image"]
+                    response["patches"].append({"op": "replace", "path": container_patch_path, "value": container_patch_value})
+                    controller.logger.info(f"Mutating container image: [{container_patch_path}][{container_patch_value}]")
 
     return respond(**response)
 
@@ -103,11 +121,7 @@ def validate():
     request_operation = request_json["request"]["operation"]
     request_uid = request_json["request"]["uid"]
 
-    controller.logger.debug(f"Validation kind: [{request_kind}]")
-    controller.logger.debug(f"Validation name: [{request_name}]")
-    controller.logger.debug(f"Validation namespace: [{request_namespace}]")
-    controller.logger.debug(f"Validation operation: [{request_operation}]")
-    controller.logger.debug(f"Validation uid: [{request_uid}]")
+    controller.logger.debug(f"Validating: [{request_kind}][{request_namespace}][{request_name}][{request_operation}][{request_uid}]")
 
     response = {
         "uid": request_uid,
@@ -115,31 +129,31 @@ def validate():
         "message": f"Validated: [{request_kind}][{request_namespace}][{request_name}]"
     }
 
-    if request_namespace not in ADMISSION_CFG_EXEMPT_NAMESPACES:
-        if request_operation in ["CREATE", "UPDATE"]:
-            if request_kind == "Deployment":
-                for request_container in request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]:
+    if request_operation in ["CREATE", "UPDATE"] and request_kind == "Deployment":
+        if request_namespace not in ADMISSION_CFG_EXEMPT_NAMESPACES:
 
-                    if "requests" not in request_container["resources"]:
-                        response["message"] += ": Rejected due to missing resources.requests element"
-                        controller.logger.warning(response["message"])
-                        if ADMISSION_CFG_ENFORCE_MODE:
-                            response["allowed"] = False
-                        return respond(**response)
+            for request_container in request_json["request"]["object"]["spec"]["template"]["spec"]["containers"]:
 
-                    if "limits" not in request_container["resources"]:
-                        response["message"] += ": Rejected due to missing resources.limits element"
-                        controller.logger.warning(response["message"])
-                        if ADMISSION_CFG_ENFORCE_MODE:
-                            response["allowed"] = False
-                        return respond(**response)
+                if "requests" not in request_container["resources"]:
+                    response["message"] += ": Rejected due to missing resources.requests element"
+                    controller.logger.warning(response["message"])
+                    if ADMISSION_CFG_ENFORCE_MODE:
+                        response["allowed"] = False
+                    return respond(**response)
 
-                    if request_container["image"] not in ADMISSION_CFG_ALLOW_IMAGES:
-                        response["message"] += f": Rejected due to invalid image: [{request_container['image']}]"
-                        controller.logger.warning(response["message"])
-                        if ADMISSION_CFG_ENFORCE_MODE:
-                            response["allowed"] = False
-                        return respond(**response)
+                if "limits" not in request_container["resources"]:
+                    response["message"] += ": Rejected due to missing resources.limits element"
+                    controller.logger.warning(response["message"])
+                    if ADMISSION_CFG_ENFORCE_MODE:
+                        response["allowed"] = False
+                    return respond(**response)
+
+                if request_container["image"] not in ADMISSION_CFG_ALLOW_IMAGES:
+                    response["message"] += f": Rejected due to invalid image: [{request_container['image']}]"
+                    controller.logger.warning(response["message"])
+                    if ADMISSION_CFG_ENFORCE_MODE:
+                        response["allowed"] = False
+                    return respond(**response)
 
     return respond(**response)
 

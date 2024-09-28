@@ -6,7 +6,7 @@ if __name__ == "__main__":
 
     request = {
         "request": {
-            "name": "name",
+            "name": "webapp",
             "namespace": "namespace",
             "operation": "CREATE",
             "uid": "uid",
@@ -24,7 +24,7 @@ if __name__ == "__main__":
                         "spec": {
                             "containers": [
                                 {
-                                    "name": "name",
+                                    "name": "container",
                                     "image": "docker.io/steveszabo/webapp:v1.1.2",
                                     "resources": {
                                         "requests": {},

@@ -8,6 +8,8 @@ from flask import request
 from flask import jsonify
 
 ADMISSION_CFG_LOG_LEVEL = os.environ.get("ADMISSION_LOG_LEVEL", "debug").lower()
+ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME = os.environ.get("ADMISSION_EXEMPT_NAMESPACES", "namespaces.exempt")
+ADMISSION_CFG_EXEMPT_NAMESPACES = []
 
 controller = Flask(__name__)
 controller.logger.setLevel(level=logging.DEBUG)
@@ -20,6 +22,14 @@ elif ADMISSION_CFG_LOG_LEVEL == "error":
     controller.logger.setLevel(level=logging.ERROR)
 elif ADMISSION_CFG_LOG_LEVEL == "critical":
     controller.logger.setLevel(level=logging.CRITICAL)
+
+controller.logger.debug(f"ADMISSION_CFG_LOG_LEVEL: [{ADMISSION_CFG_LOG_LEVEL}]")
+controller.logger.debug(f"ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME: [{ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME}]")
+
+with open(ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME) as handle:
+    for item in handle:
+        controller.logger.debug(f"Exempt namespace: [{item.rstrip()}]")
+        ADMISSION_CFG_EXEMPT_NAMESPACES.append(item.rstrip())
 
 
 def respond(allowed, uid, message, patches=None):
@@ -58,7 +68,7 @@ def mutate():
         "message": f"Mutated: [{request_kind}][{request_name}]"
     }
 
-    if request_operation in ["CREATE", "UPDATE"] and request_kind == "Namespace":
+    if request_operation in ["CREATE", "UPDATE"] and request_kind == "Namespace" and request_name not in ADMISSION_CFG_EXEMPT_NAMESPACES:
 
         if "labels" not in request_json["request"]["object"]["metadata"]:
             response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})

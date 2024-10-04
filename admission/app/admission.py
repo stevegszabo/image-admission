@@ -54,19 +54,17 @@ def mutate():
     response = {
         "uid": request_uid,
         "allowed": True,
-        "patches": None,
+        "patches": [],
         "message": f"Mutated: [{request_kind}][{request_name}]"
     }
 
     if request_operation in ["CREATE", "UPDATE"] and request_kind == "Namespace":
 
-        response["patches"] = []
-
         if "labels" not in request_json["request"]["object"]["metadata"]:
             response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})
 
-        response["patches"].append({"op": "add", "path": "/metadata/labels/'pod-security.kubernetes.io/enforce'", "value": "restricted"})
-        response["patches"].append({"op": "add", "path": "/metadata/labels/'pod-security.kubernetes.io/enforce-version'", "value": "latest"})
+        response["patches"].append({"op": "add", "path": "/metadata/labels/pod-security.kubernetes.io~1enforce", "value": "restricted"})
+        response["patches"].append({"op": "add", "path": "/metadata/labels/pod-security.kubernetes.io~1enforce-version", "value": "latest"})
 
     return respond(**response)
 

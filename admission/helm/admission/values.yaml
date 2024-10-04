@@ -72,8 +72,8 @@ readinessProbe:
 
 autoscaling:
   enabled: true
-  minReplicas: 2
-  maxReplicas: 4
+  minReplicas: 1
+  maxReplicas: 3
   targetCPUUtilizationPercentage: 75
 
 mutatingWebhook:

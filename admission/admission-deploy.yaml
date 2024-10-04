@@ -1,36 +1,5 @@
 ---
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: admission
-data:
-  namespaces.exempt: |
-    base-actions-arc-google
-    base-actions-controller
-    base-admission
-    base-argocd
-    base-metrics-server
-    base-terraform-agents
-    base-terraform-operator
-    kube-node-lease
-    kube-public
-    kube-system
-    istio-system
-  images.allowed: |
-    docker.io/steveszabo/webapp:fc55ec1
-    docker.io/steveszabo/webapp:v1.1.0
-    docker.io/steveszabo/webapp:v1.1.1
-    docker.io/steveszabo/webapp:v1.1.2
-  mutate.workloads: |
-    {
-      "default": {
-        "deploy-image": "docker.io/steveszabo/webapp:v1.1.2",
-        "mutate-image": "docker.io/steveszabo/webapp:fc55ec1"
-      }
-    }    
-
----
-apiVersion: v1
 kind: Service
 metadata:
   name: admission
@@ -60,16 +29,6 @@ spec:
         app: admission
     spec:
       volumes:
-      - name: admission-configmap
-        configMap:
-          name: admission
-          items:
-          - key: namespaces.exempt
-            path: namespaces.exempt
-          - key: images.allowed
-            path: images.allowed
-          - key: mutate.workloads
-            path: mutate.workloads
       - name: admission-secret
         secret:
           secretName: admission
@@ -80,12 +39,6 @@ spec:
         - name: admission
           containerPort: 8443
         env:
-        - name: ADMISSION_ALLOW_IMAGES
-          value: "/app/config/images.allowed"
-        - name: ADMISSION_EXEMPT_NAMESPACES
-          value: "/app/config/namespaces.exempt"
-        - name: ADMISSION_MUTATE_WORKLOADS
-          value: "/app/config/mutate.workloads"
         - name: ADMISSION_CRT
           value: "/app/ssl/admission.base-admission.svc.crt"
         - name: ADMISSION_KEY
@@ -102,12 +55,7 @@ spec:
           value: "15"
         - name: ADMISSION_LOG_LEVEL
           value: "debug"
-        - name: ADMISSION_AUDIT_MODE
-          value: "true"
         volumeMounts:
-        - name: admission-configmap
-          mountPath: /app/config
-          readOnly: true
         - name: admission-secret
           subPath: tls.crt
           mountPath: /app/ssl/admission.base-admission.svc.crt

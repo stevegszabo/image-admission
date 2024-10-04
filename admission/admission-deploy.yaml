@@ -82,6 +82,10 @@ spec:
           value: "15"
         - name: ADMISSION_LOG_LEVEL
           value: "debug"
+        - name: ADMISSION_SECURITY_POLICY_MODE
+          value: "restricted"
+        - name: ADMISSION_SECURITY_POLICY_VERSION
+          value: "latest"
         volumeMounts:
         - name: admission-configmap
           mountPath: /app/config

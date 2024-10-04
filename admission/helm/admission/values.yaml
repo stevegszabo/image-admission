@@ -1,0 +1,173 @@
+replicaCount: 1
+
+image:
+  repository: docker.io/steveszabo/admission
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  privileged: false
+  runAsNonRoot: true
+  runAsUser: 33
+  runAsGroup: 33
+  capabilities:
+    drop: ["ALL"]
+
+service:
+  type: ClusterIP
+  servicePort: 443
+  containerPort: 8443
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+livenessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+  httpGet:
+    path: /health
+    port: admission
+    scheme: HTTPS
+
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+  httpGet:
+    path: /health
+    port: admission
+    scheme: HTTPS
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 75
+
+secrets:
+  certificate:
+    crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDYjCCAkqgAwIBAgIBADANBgkqhkiG9w0BAQsFADA0MRUwEwYDVQQKDAxDb21w
+      YW55IEluYy4xGzAZBgNVBAMMEmJhc2UtYWRtaXNzaW9uLnN2YzAeFw0yNDA3MTUw
+      MDEwMTBaFw0yNTA3MTUwMDEwMTBaMEgxJTAjBgNVBAMMHGFkbWlzc2lvbi5iYXNl
+      LWFkbWlzc2lvbi5zdmMxHzAdBgNVBAoMFmFkbWlzc2lvbiBvcmdhbml6YXRpb24w
+      ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQChZJx01dTGzl/Cu1fQkdod
+      ix+67KOOUqGKAe4vHE+9GtkrO4aamcFTNBeX4g9jz/fWn3wUhdu8BwqyO8IR/+Iw
+      XUOTZwcYL6Cx/LKJlS1xWrpFSI/d2UG5VkFybccwwKIt7jPQcGWmP8EakK3cJgfH
+      RQ/ZhmoJ5Gnx6I9SncFIxOlUeaueOCrpbKAszRteOR4SFV2silULRoKxbCnROjqw
+      g7JxdCCr3eMegMS8KM0PkDOIVmQye+IhBXcSGdGXoexKMV/Fz0un95e7uuwJ9mfD
+      kr9+q4iD4TxYGoJJGm8gQd+1p31VAkkLItSVlTt2w/byZ13GX8mIVzV4dOE0nbcp
+      AgMBAAGjazBpMCcGA1UdEQQgMB6CHGFkbWlzc2lvbi5iYXNlLWFkbWlzc2lvbi5z
+      dmMwHQYDVR0OBBYEFE3AciF0OpdLEl7E2hHlVc74kLFjMB8GA1UdIwQYMBaAFKXf
+      zieHJYMp1zU8oze4f1OpuuMBMA0GCSqGSIb3DQEBCwUAA4IBAQAdqW4OdBj4Tuim
+      WXo/poZglK2zpJcU28NKyu2mAnBPjsTkqJ9RQuhq6raBewn99ZiNYcgfaGFmVLP5
+      x11UeUXJFYvslhE+kLj2a2CyFvawhj1K/0+anLV20J04hjDJmq8fH1WamnP22eO8
+      Z2k0K2DyF2Ot1PpYfwXOhQiZMiw4SjGszLJ1UYBCQh3HVPMvkCBtzAH1qmPlOLo5
+      n3NV/xMgk5zbu1NoEKmaUJc36wfZU0Fo0YYgVRjkbFr1x66J5fE9Qj184+LarWMG
+      0nO5OMKYwKiBn3MC2SZ+34d8JRcAn+vN5cnatCbQgK3FRqQnX7LTLmeWvfROQkVQ
+      rIrMaHQN
+      -----END CERTIFICATE-----
+    key: | 
+      -----BEGIN PRIVATE KEY-----
+      MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQChZJx01dTGzl/C
+      u1fQkdodix+67KOOUqGKAe4vHE+9GtkrO4aamcFTNBeX4g9jz/fWn3wUhdu8Bwqy
+      O8IR/+IwXUOTZwcYL6Cx/LKJlS1xWrpFSI/d2UG5VkFybccwwKIt7jPQcGWmP8Ea
+      kK3cJgfHRQ/ZhmoJ5Gnx6I9SncFIxOlUeaueOCrpbKAszRteOR4SFV2silULRoKx
+      bCnROjqwg7JxdCCr3eMegMS8KM0PkDOIVmQye+IhBXcSGdGXoexKMV/Fz0un95e7
+      uuwJ9mfDkr9+q4iD4TxYGoJJGm8gQd+1p31VAkkLItSVlTt2w/byZ13GX8mIVzV4
+      dOE0nbcpAgMBAAECggEACYRNx4PuapSzx99VM8rN8k0IX3ThxhwwQ1uOyH9iYlPJ
+      d4eojchAQqBBPecKIkgapLC919X22ZUOt+jXLkmI9HIjcHc0T2RLlQNCIePGjLcd
+      YcWAGkRb4EpqTI2Vn9XUGmI/8uwVymJbCC582gzyC3mSkDChYxjxeF7OyL/drGU8
+      Ew0FLoSnrqDRcD0sy0Gp9AfgRvoUfAtFcQCt2YRkjIKw/VeCTAONbXg2G8taBTKN
+      Mh5PqZSYS/DGDnXXevBtyi9+ATbX4YCaEFC+tqR+wiqZaV8VreWNISj47NhMSSUq
+      0wd3bPi5QlUH/jjTtxuR8A+ooHUCwN3C5bO7SXqQwwKBgQDb90tE3pW1R3koycyv
+      AFgZgPjEYrjGedU3dVRlsVBPG+7kdPnMFaExTs+uxKvFDsUWLBtF5f2aNfNRU1k7
+      glw1Z4SopFYmfZec+JS2DRyErh/+lPlqpfajPAf7UC+58DO262P+v4M6M6k+gXjy
+      vr/D/BPHNGArm9zmzDzPi+cZYwKBgQC71PG02QRSXz5I2LWyp/nHehps6iN4XkCK
+      DI4FfpfwWzstLTvJcJZcFw96dWNGTWZdVzqi078b3Ra37h+eA4Zi8lsXElA7st8y
+      YS/hb0Yaa4I3ZGm94Wl8nFjfa5IIEBAEJOY506gMOKs273TSxpI5Jbe8ljIlqnbx
+      zRFIqSdZAwKBgQDXn3OeQB87A6QmMqM9jTXPUlkJkciVbspuwcoIoaca1UP5mR1h
+      THalsh7tsAa9dbwG/xeBDnHp4CbzOqQHLMOc6ivlcKqusoCTtC16xCGHgnUEhx5z
+      x9qcqvUcCr+uImNfVSHBkBRgUlH+XsakFg4/XPQ6WwJG3VPOvriBrx/MBwKBgFVJ
+      pc7WU64LbT6qmCZdO3+mI+WckyqOsYN9m+dGyjrrUf17cpBPPRbnqbGTJ9a+QmLT
+      vt48g6RlSXGPAHBBbX30SgQ53pCc8dfwZUtZuV05v9DjGViMx9c7LueT8qUSlhMr
+      phZP0xhpiuTQ6hzi6XZld/57vJ15v7Sfxt9VX3Z9AoGAIN8BeG4D8jFpkP92w2LG
+      O39fF9wxjeABT9iuEKLgRoS9rBlsN+XRTY/j4BgEUlHpSkj35a38l6I29YxeIf5s
+      UGy6yvp64lreuZsaLqj5uM5kgWYIny2hgG1KSxa8qnUT7N8rUUcjynAXmFhCHQ30
+      6r4N8T9DyP/8lOyqggf9BqQ=
+      -----END PRIVATE KEY-----
+
+namespaces:
+  exempt: |
+    base-actions-arc-google
+    base-actions-controller
+    base-admission
+    base-argocd
+    base-metrics-server
+    base-terraform-agents
+    base-terraform-operator
+    kube-node-lease
+    kube-public
+    kube-system
+    istio-system
+
+environment:
+- name: ADMISSION_BIND
+  value: "0.0.0.0:8443"
+- name: ADMISSION_WORKERS
+  value: "1"
+- name: ADMISSION_THREADS
+  value: "25"
+- name: ADMISSION_TIMEOUT
+  value: "15"
+- name: ADMISSION_KEEP_ALIVE
+  value: "15"
+- name: ADMISSION_LOG_LEVEL
+  value: "debug"
+- name: ADMISSION_SECURITY_POLICY_MODE
+  value: "restricted"
+- name: ADMISSION_SECURITY_POLICY_VERSION
+  value: "latest"
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

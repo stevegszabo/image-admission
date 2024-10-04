@@ -76,8 +76,42 @@ autoscaling:
   maxReplicas: 4
   targetCPUUtilizationPercentage: 75
 
+mutatingWebhook:
+  name: admission.cloudserv.ca
+  sideEffects: None
+  timeoutSeconds: 10
+  reinvocationPolicy: Never
+  rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    apiVersions: ["*"]
+    operations:
+    - CREATE
+    - UPDATE
+
 secrets:
   certificate:
+    ca: |
+      -----BEGIN CERTIFICATE-----
+      MIIDSTCCAjGgAwIBAgIUYvIo6vqBxo/d2gYBPVIFF8lxN4gwDQYJKoZIhvcNAQEL
+      BQAwNDEVMBMGA1UECgwMQ29tcGFueSBJbmMuMRswGQYDVQQDDBJiYXNlLWFkbWlz
+      c2lvbi5zdmMwHhcNMjQwNzE1MDAxMDA5WhcNMjUwNzE1MDAxMDA5WjA0MRUwEwYD
+      VQQKDAxDb21wYW55IEluYy4xGzAZBgNVBAMMEmJhc2UtYWRtaXNzaW9uLnN2YzCC
+      ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALmw4n7vx/tTGhfGK0m3DjKy
+      Hzp6W+fMb/xTncIH+n3EyhlRYnN6qMiLKvosXfTmeoYTnk49v8A3wZiHN/DYDRHr
+      rY+GesYDv3Vb4OAiiHFZRnl3TtxJqmRw3RKTwSRQDvjHCOwDvo29WZJvMvQJPfM3
+      XcT0mcE3/pJxSAzhsDNpMFLK8QhMtFb+wxKAAg7JFTKFwb4KFyrZatdmaBAvUp0J
+      h0k6f9YMPe2JI3DdZ1Jw/H5I1CTaoZn2Egp0n/pvB/Y1unZhdQteLOIuqnWIgoma
+      xYfSg7w8BMGTWwANFJJ9k4YCdxrSpZAUUwsJdkPz4nVbbrDCeFLYL4DqGvxBL4MC
+      AwEAAaNTMFEwHQYDVR0OBBYEFKXfzieHJYMp1zU8oze4f1OpuuMBMB8GA1UdIwQY
+      MBaAFKXfzieHJYMp1zU8oze4f1OpuuMBMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZI
+      hvcNAQELBQADggEBADIa/FKQmU6XUya/CNjSlsgEsa+JaNTUbo2rCh7qt7uOGgrY
+      Naum4v/dwYOW+6fcwlFlJjnqS/kQyxi2DvB37f2n52RT+KQyNHiCCippoAu8UY6f
+      ACn9NN7Os9NxxzZ2HXNzkXFbuPmVAXdcudpiSVgy1QZdc8Zsf64IVlAmZ6h9I7qf
+      KVS9enKO0frQPiZzq9q23Kk34ZHtf8JufE1umK2KQHnm/fZIno+N87MpkRYyYBeT
+      4mGoe7T+82rE0mpTO+N1qrHpyWFzts291+S5FGFn0T6ERMKhKmHyBUDoOwNUjd7T
+      PNTBqgLU+KZDbVsLF94V2M52Lq8qmjVW+o9kECU=
+      -----END CERTIFICATE-----
     crt: |
       -----BEGIN CERTIFICATE-----
       MIIDYjCCAkqgAwIBAgIBADANBgkqhkiG9w0BAQsFADA0MRUwEwYDVQQKDAxDb21w

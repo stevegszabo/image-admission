@@ -76,6 +76,12 @@ autoscaling:
   maxReplicas: 3
   targetCPUUtilizationPercentage: 75
 
+podDisruptionBudget:
+  create: false
+  minAvailable: 1
+  matchLabels:
+    app.kubernetes.io/name: admission
+
 mutatingWebhook:
   name: admission.cloudserv.ca
   sideEffects: None

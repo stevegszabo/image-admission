@@ -8,7 +8,8 @@ metadata:
 spec:
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
   selector:
-  {{- with .Values.podDisruptionBudget.matchLabels }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    matchLabels:
+    {{- with .Values.podDisruptionBudget.matchLabels }}
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
 {{- end }}

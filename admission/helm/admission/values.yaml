@@ -77,7 +77,7 @@ autoscaling:
   targetCPUUtilizationPercentage: 75
 
 podDisruptionBudget:
-  create: false
+  create: true
   minAvailable: 1
   matchLabels:
     app.kubernetes.io/name: admission

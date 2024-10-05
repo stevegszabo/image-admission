@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "admission.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
+  {{- if not .Values.autoscaling.create }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:

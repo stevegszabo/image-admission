@@ -201,6 +201,8 @@ environment:
   value: "restricted"
 - name: ADMISSION_SECURITY_POLICY_VERSION
   value: "latest"
+- name: ADMISSION_ISTIO_INJECTION_MODE
+  value: "enabled"
 
 # Additional volumes on the output Deployment definition.
 volumes: []

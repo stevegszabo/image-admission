@@ -10,6 +10,7 @@ from flask import jsonify
 ADMISSION_CFG_LOG_LEVEL = os.environ.get("ADMISSION_LOG_LEVEL", "debug").lower()
 ADMISSION_CFG_SECURITY_POLICY_MODE = os.environ.get("ADMISSION_SECURITY_POLICY_MODE", "privileged").lower()
 ADMISSION_CFG_SECURITY_POLICY_VERSION = os.environ.get("ADMISSION_SECURITY_POLICY_VERSION", "latest").lower()
+ADMISSION_CFG_ISTIO_INJECTION_MODE = os.environ.get("ADMISSION_ISTIO_INJECTION_MODE", "disabled").lower()
 ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME = os.environ.get("ADMISSION_EXEMPT_NAMESPACES", "namespaces.exempt")
 ADMISSION_CFG_EXEMPT_NAMESPACES = []
 
@@ -28,6 +29,7 @@ elif ADMISSION_CFG_LOG_LEVEL == "critical":
 controller.logger.debug(f"ADMISSION_CFG_LOG_LEVEL: [{ADMISSION_CFG_LOG_LEVEL}]")
 controller.logger.debug(f"ADMISSION_CFG_SECURITY_POLICY_MODE: [{ADMISSION_CFG_SECURITY_POLICY_MODE}]")
 controller.logger.debug(f"ADMISSION_CFG_SECURITY_POLICY_VERSION: [{ADMISSION_CFG_SECURITY_POLICY_VERSION}]")
+controller.logger.debug(f"ADMISSION_CFG_ISTIO_INJECTION_MODE: [{ADMISSION_CFG_ISTIO_INJECTION_MODE}]")
 controller.logger.debug(f"ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME: [{ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME}]")
 
 with open(ADMISSION_CFG_EXEMPT_NAMESPACES_FILENAME) as handle:
@@ -89,6 +91,12 @@ def mutate():
             "op": "add",
             "path": "/metadata/labels/pod-security.kubernetes.io~1enforce-version",
             "value": ADMISSION_CFG_SECURITY_POLICY_VERSION
+        })
+
+        response["patches"].append({
+            "op": "add",
+            "path": "/metadata/labels/istio-injection",
+            "value": ADMISSION_CFG_ISTIO_INJECTION_MODE
         })
 
     return respond(**response)

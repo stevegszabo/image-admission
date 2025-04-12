@@ -175,14 +175,16 @@ namespaces:
     base-actions-arc-google
     base-actions-controller
     base-admission
-    base-argocd
-    base-metrics-server
+    base-codefresh
+    base-metrics
     base-terraform-agents
-    base-terraform-operator
+    calico-apiserver
+    calico-system
+    default
     kube-node-lease
     kube-public
     kube-system
-    istio-system
+    tigera-operator
 
 environment:
 - name: ADMISSION_BIND

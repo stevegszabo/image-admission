@@ -65,8 +65,6 @@ def mutate():
     request_operation = request_json["request"]["operation"]
     request_uid = request_json["request"]["uid"]
 
-    controller.logger.debug(f"Mutating: [{request_kind}][{request_name}][{request_operation}][{request_uid}]")
-
     response = {
         "uid": request_uid,
         "allowed": True,
@@ -74,12 +72,19 @@ def mutate():
         "message": f"Mutated: [{request_kind}][{request_name}]"
     }
 
-    if request_operation in ["CREATE", "UPDATE"] and \
-       request_kind == "Namespace" and \
-       request_name not in ADMISSION_CFG_EXEMPT_NAMESPACES:
+    if request_name in ADMISSION_CFG_EXEMPT_NAMESPACES:
+        controller.logger.debug(f"Ignoring: [{request_kind}][{request_name}][{request_operation}][{request_uid}]")
+        return respond(**response)
 
+    controller.logger.debug(f"Mutating: [{request_kind}][{request_name}][{request_operation}][{request_uid}]")
+
+    if request_operation in ["CREATE", "UPDATE"] and request_kind == "Namespace":
         if "labels" not in request_json["request"]["object"]["metadata"]:
-            response["patches"].append({"op": "add", "path": "/metadata/labels", "value": {}})
+            response["patches"].append({
+                "op": "add",
+                "path": "/metadata/labels",
+                "value": {}
+            })
 
         response["patches"].append({
             "op": "add",

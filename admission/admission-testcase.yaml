@@ -13,24 +13,18 @@ spec:
       labels:
         app: webapp
     spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: webapp-01
+      - name: webapp
         image: docker.io/steveszabo/webapp:v1.1.2
-        command: ["/bin/bash", "-c", "while true; do date; sleep 1; done"]
-        resources:
-          requests:
-            cpu: 100m
-            memory: 64M
-          limits:
-            cpu: 100m
-            memory: 64M
-      - name: webapp-02
-        image: docker.io/steveszabo/webapp:v1.1.2
-        command: ["/bin/bash", "-c", "while true; do date; sleep 1; done"]
-        resources:
-          requests:
-            cpu: 100m
-            memory: 64M
-          limits:
-            cpu: 100m
-            memory: 64M
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          runAsNonRoot: true
+          runAsGroup: 33
+          runAsUser: 33

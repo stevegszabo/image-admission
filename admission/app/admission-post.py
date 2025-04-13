@@ -4,7 +4,7 @@ import requests
 
 if __name__ == "__main__":
 
-    request = {
+    create_deployment = {
         "request": {
             "name": "webapp",
             "namespace": "namespace",
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     }
 
     try:
-        response = requests.post(url="http://192.168.2.180:8443/mutate", json=request, timeout=10)
+        response = requests.post(url="http://127.0.0.1:8443/mutate", json=create_deployment, timeout=10)
     except Exception as err:
         print(f"Unable to post: [{err}]")
         sys.exit(1)

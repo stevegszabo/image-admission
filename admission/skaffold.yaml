@@ -10,3 +10,4 @@ build:
 manifests:
   rawYaml:
   - admission-deploy.yaml
+  - admission-hook-mutate.yaml

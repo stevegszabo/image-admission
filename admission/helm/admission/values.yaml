@@ -205,6 +205,12 @@ environment:
   value: "latest"
 - name: ADMISSION_ISTIO_INJECTION_MODE
   value: "enabled"
+- name: ADMISSION_EXEMPT_NAMESPACES
+  value: "/app/config/namespaces.exempt"
+- name: ADMISSION_CRT
+  value: "/app/ssl/admission.base-admission.svc.crt"
+- name: ADMISSION_KEY
+  value: "/app/ssl/admission.base-admission.svc.key"
 
 # Additional volumes on the output Deployment definition.
 volumes: []

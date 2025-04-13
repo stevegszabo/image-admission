@@ -72,37 +72,42 @@ def mutate():
         "message": f"Mutated: [{request_kind}][{request_name}]"
     }
 
-    if request_name in ADMISSION_CFG_EXEMPT_NAMESPACES:
-        controller.logger.debug(f"Ignoring: [{request_kind}][{request_name}][{request_operation}][{request_uid}]")
+    if request_kind != "Namespace":
+        controller.logger.debug(f"Ignoring resource: [{request_kind}][{request_name}][{request_operation}][{request_uid}]")
         return respond(**response)
 
-    controller.logger.debug(f"Mutating: [{request_kind}][{request_name}][{request_operation}][{request_uid}]")
+    if request_name in ADMISSION_CFG_EXEMPT_NAMESPACES:
+        controller.logger.debug(f"Ignoring namespace: [{request_kind}][{request_name}][{request_operation}][{request_uid}]")
+        return respond(**response)
 
-    if request_operation in ["CREATE", "UPDATE"] and request_kind == "Namespace":
-        if "labels" not in request_json["request"]["object"]["metadata"]:
-            response["patches"].append({
-                "op": "add",
-                "path": "/metadata/labels",
-                "value": {}
-            })
+    if request_operation not in ["CREATE", "UPDATE"]:
+        controller.logger.debug(f"Ignoring operation: [{request_kind}][{request_name}][{request_operation}][{request_uid}]")
+        return respond(**response)
 
+    if "labels" not in request_json["request"]["object"]["metadata"]:
         response["patches"].append({
             "op": "add",
-            "path": "/metadata/labels/pod-security.kubernetes.io~1enforce",
-            "value": ADMISSION_CFG_SECURITY_POLICY_MODE
+            "path": "/metadata/labels",
+            "value": {}
         })
 
-        response["patches"].append({
-            "op": "add",
-            "path": "/metadata/labels/pod-security.kubernetes.io~1enforce-version",
-            "value": ADMISSION_CFG_SECURITY_POLICY_VERSION
-        })
+    response["patches"].append({
+        "op": "add",
+        "path": "/metadata/labels/pod-security.kubernetes.io~1enforce",
+        "value": ADMISSION_CFG_SECURITY_POLICY_MODE
+    })
 
-        response["patches"].append({
-            "op": "add",
-            "path": "/metadata/labels/istio-injection",
-            "value": ADMISSION_CFG_ISTIO_INJECTION_MODE
-        })
+    response["patches"].append({
+        "op": "add",
+        "path": "/metadata/labels/pod-security.kubernetes.io~1enforce-version",
+        "value": ADMISSION_CFG_SECURITY_POLICY_VERSION
+    })
+
+    response["patches"].append({
+        "op": "add",
+        "path": "/metadata/labels/istio-injection",
+        "value": ADMISSION_CFG_ISTIO_INJECTION_MODE
+    })
 
     return respond(**response)
 
